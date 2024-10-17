@@ -9,15 +9,17 @@ categories=["Compilers", "Parser implementations", "Parsing tools"]
 repository="https://github.com/Albassel/htpp"
 license="MIT"
 exclude = [
-    "/benches/*",
-    "/src/tests.rs",
-    ".gitignore"
+    "benches/parse.rs",
+    "src/tests.rs",
+    ".gitignore",
+    "README.md"
 ]
 #documentation="URL of package docs"
 
 
 [[bench]]
 harness = false
+path = "benches/parse.rs"
 name = "parse"
 
 [dependencies]
