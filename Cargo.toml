@@ -6,7 +6,6 @@ authors=["Basel"]
 description="A simple, fast, and secure http parser. It adheres strictly to the http specification, which is intentional as to be efficient and prevent possible http related attacks. It only supports http 1.1 but support for http 2.0 is planned"
 keywords=["http", "parser", "http 1.1", "http/1.1"]
 categories=["Compilers", "Parser implementations", "Parsing tools"]
-readme="https://github.com/Albassel/htpp/blob/main/README.md"
 repository="https://github.com/Albassel/htpp"
 license="MIT"
 #documentation="URL of package docs"
