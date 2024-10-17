@@ -8,6 +8,11 @@ keywords=["http", "parser", "http 1.1", "http/1.1"]
 categories=["Compilers", "Parser implementations", "Parsing tools"]
 repository="https://github.com/Albassel/htpp"
 license="MIT"
+exclude = [
+    "benches/*",
+    "src/tests.rs",
+    ".gitignore"
+]
 #documentation="URL of package docs"
 
 
@@ -19,3 +24,4 @@ name = "parse"
 
 [dev-dependencies]
 criterion = "0.5.1"
+
