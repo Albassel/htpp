@@ -23,9 +23,12 @@ use core::{str, fmt};
 #[cfg(test)]
 mod tests;
 /// Contains types and functions for parsing and generating http requests
-pub use mod request;
+pub mod request;
 /// Contains types and functions for parsing and generating http responses
-pub use mod response;
+pub mod response;
+
+pub use request::{Method, Request, RequestParser};
+pub use response::{Response, ResponseParser};
 
 
 const SPACE: u8 = 32;
