@@ -11,7 +11,7 @@ Feel free to make a pull request if you think you can improve the code
 To parse an HTTP request:
 
 ```rust
-let req = b"GET /index.html HTTP/1.1\r\n";
+let req = b"GET /index.html HTTP/1.1\r\n\r\n";
 let parsed_req = htpp::RequestParser::new(req).parse().unwrap();
 assert(parsed_req.method() == htpp::Method::Get);
 assert(parsed_req.path() == "/index.html");
