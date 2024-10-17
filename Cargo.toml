@@ -1,0 +1,23 @@
+[package]
+name = "htpp"
+version = "0.1.0"
+edition = "2021"
+authors=["Basel"]
+description="A simple, fast, and secure http parser. It adheres strictly to the http specification, which is intentional as to be efficient and prevent possible http related attacks. It only supports http 1.1 but support for http 2.0 is planned"
+keywords=["http", "parser", "http 1.1", "http/1.1"]
+categories=["Compilers", "Parser implementations", "Parsing tools"]
+#documentation="URL of package docs"
+#readme="path to README file"
+#repository="URL to github repo"
+#license="licenseName"
+#license-file="pathToLicenseFile"
+
+
+[[bench]]
+harness = false
+name = "parse"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.5.1"
