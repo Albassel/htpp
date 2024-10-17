@@ -9,8 +9,8 @@ categories=["Compilers", "Parser implementations", "Parsing tools"]
 repository="https://github.com/Albassel/htpp"
 license="MIT"
 exclude = [
-    "benches/*",
-    "src/tests.rs",
+    "/benches/*",
+    "/src/tests.rs",
     ".gitignore"
 ]
 #documentation="URL of package docs"
