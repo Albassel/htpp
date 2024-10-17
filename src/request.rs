@@ -158,7 +158,7 @@ impl<'a> RequestParser<'a> {
   // parses the path and removes the space after making sure it only contains URL safe characters
   fn parse_path(&mut self) -> Result<&'a str> {
     for (counter, character) in self.bytes.iter().enumerate() {
-      if URL_SAFE.contains(character) {
+      if URL_SAFE.binary_search(character).is_ok() {
         continue;
       } else if *character == SPACE {
         let (path, rest) = self.bytes.split_at(counter);
