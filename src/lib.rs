@@ -27,6 +27,9 @@ pub mod request;
 /// Contains types and functions for parsing and generating http responses
 pub mod response;
 
+pub use request::{Method, Request, RequestParser};
+pub use response::{Response, ResponseParser};
+
 
 const SPACE: u8 = 32;
 const CR: u8 = 13;

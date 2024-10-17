@@ -103,7 +103,7 @@ impl<'a> ResponseParser<'a> {
   #[inline]
   // must only call if you know the buffer has >n characters
   fn advance(&mut self, n: usize) {
-    self.bytes = &self.bytes[n..self.bytes.len()];
+    self.bytes = &self.bytes[n..];
   }
   #[inline]
   fn find_substr(&self, substr: &'a [u8]) -> Option<usize> {
@@ -118,6 +118,7 @@ impl<'a> ResponseParser<'a> {
     };
     let (res, body) = self.bytes.split_at(idx+2);
     self.bytes = res;
+    if res.len() < 12 {return Err(Error::Malformed);}
     self.parse_http_version()?;
     let (status, reason) = self.parse_status()?;
     let headers = self.parse_headers()?;
@@ -131,15 +132,14 @@ impl<'a> ResponseParser<'a> {
   #[inline]
   //removes the space after
   fn parse_http_version(&mut self) -> Result<HttpVer> {
-    match self.bytes.get(0..9) {
-      Some(b"HTTP/1.1 ") => {
-        self.advance(9);
-        Ok(HttpVer::One)
-      }, Some(b"HTTP/2.0 ") => {
-        self.advance(9);
-        Ok(HttpVer::Two)
-      }, _ => {Err(Error::Malformed)}
+    if &self.bytes[0..9] == b"HTTP/1.1 " {
+      self.advance(9);
+      return Ok(HttpVer::One);
+    } else if &self.bytes[0..9] == b"HTTP/2.0 " {
+      self.advance(9);
+      return Ok(HttpVer::Two);
     }
+    Err(Error::Malformed)
   }
   #[inline]
   //parses the method and removes white space after it

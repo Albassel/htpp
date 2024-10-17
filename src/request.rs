@@ -114,7 +114,7 @@ impl<'a> RequestParser<'a> {
   #[inline]
   // must only call if you know the buffer has >n characters
   fn advance(&mut self, n: usize) {
-    self.bytes = &self.bytes[n..self.bytes.len()];
+    self.bytes = &self.bytes[n..];
   }
   #[inline]
   fn find_substr(&self, substr: &'a [u8]) -> Option<usize> {
@@ -147,11 +147,12 @@ impl<'a> RequestParser<'a> {
   fn parse_method(&mut self) -> Result<Method> {
     if &self.bytes[0..4] == b"GET " {
       self.advance(4);
-      Ok(Method::Get)
+      return Ok(Method::Get);
     } else if &self.bytes[0..5] == b"POST " {
       self.advance(5);
-      Ok(Method::Get)
-    } else {Err(Error::Malformed)}
+      return Ok(Method::Get);
+    } 
+    Err(Error::Malformed)
   }
   #[inline]
   // parses the path and removes the space after making sure it only contains URL safe characters
