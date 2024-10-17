@@ -1,6 +1,6 @@
 [package]
 name = "htpp"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 authors=["Basel"]
 description="A simple, fast, and secure http parser. It adheres strictly to the http specification, which is intentional as to be efficient and prevent possible http related attacks. It only supports http 1.1 but support for http 2.0 is planned"
