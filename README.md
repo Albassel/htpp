@@ -1,6 +1,6 @@
 # Htpp
 
-An **fast** and simple HTTP 1.1 parser written in Rust
+A **fast** and simple HTTP 1.1 parser written in Rust
 
 # Contribution
 
