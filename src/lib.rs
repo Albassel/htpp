@@ -6,15 +6,57 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-//TODO: support http2, url parsing
-
 //! # httpp
 //!
-//! A library for parsing HTTP requests and responses. Support for Http
-//! 2.0 is planned for the future
+//! A library for parsing HTTP requests and responses. The focus is on speed and safety. It is intentionally strict
+//! to prevent possible HTTP attacks
 //! 
-//! The focus is on speed, safety, and security. It is intentionally designed to be strict to prevent a whole class of http attacks
-//!
+//! ## Working with [Request]
+//! 
+//! You can parse a request as follows:
+//! 
+//! ```rust
+//! use http::Request;
+//! 
+//! let req = b"GET /index.html HTTP/1.1\r\n\r\n";
+//! let parsed = Request::parse(req).unwrap();
+//! assert!(parsed.method() == htpp::Method::Get);
+//! assert!(parsed.path() == "/index.html");
+//! ```
+//! You can create a request as follows:
+//! 
+//! ```rust
+//! use http::{Method, Request, Header};
+//! 
+//! let method = Method::Get;
+//! let path = "/index.html";
+//! let headers = vec![Header::new("Accept", "*/*")];
+//! let req = Request::new(method, path, headers);
+//! ```
+//! ## Working with [Response]
+//! 
+//! You can parse a response as follows:
+//! 
+//! ```rust
+//! use http::Response;
+//! 
+//! let req = b"HTTP/1.1 200 OK GET\r\n\r\n";
+//! let parsed = Response::parse(req).unwrap();
+//! assert!(parsed.status() == 200);
+//! assert!(parsed.reason() == "OK");
+//! ```
+//! 
+//! You can create a response as follows:
+//! 
+//! ```rust
+//! use http::{Response, Header};
+//! 
+//! let status = 200;
+//! let reason = "OK";
+//! let headers = vec![Header::new("Connection", "keep-alive")];
+//! let req = Response::new(method, path, headers);
+//! ```
+//! 
 
 use core::{str, fmt};
 
@@ -33,7 +75,7 @@ const CR: u8 = 13;
 const LF: u8 = 10;
 const COLON: u8 = 58;
 const HTAB: u8 = 9;
-/// a result holding a parse error
+/// A result holding a parse error
 pub type Result<T> = std::result::Result<T, Error>;
 const URL_SAFE: [u8; 79] = [
     33,36,38,39,40,41,42,43,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,61,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122
@@ -45,7 +87,6 @@ const REASON_PHRASE_SAFE: [u8; 53] = [
 
 #[derive(Debug, PartialEq, Eq)]
 /// All parsing errors possible
-/// Note that there is only one variant as to not give an attacker any information about why the parsing failed 
 pub enum Error{
     /// The request is malformed and doesn't adhere to the standard
     Malformed
@@ -59,7 +100,7 @@ impl std::error::Error for Error {}
 
 
 #[derive(Debug, PartialEq, Eq)]
-/// Represents possible http versions
+/// Possible http versions
 pub enum HttpVer {
     /// Http 1.1
     One,
@@ -85,7 +126,7 @@ impl fmt::Display for HttpVer {
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-/// Represents an http header
+/// An HTTP header
 pub struct Header<'a> {
     name: &'a str,
     val: &'a [u8],

@@ -19,10 +19,9 @@ pub struct Response<'a> {
     body: &'a [u8],
 }
 impl<'a> Response<'a> {
-  /// Construct a new Response from its parts.
-  /// Use an empty `&str` to create a `Respose` with no reason phrase
-  /// Use an empty `Vec` to create a `Respose` with no headers
-  /// Use an empty `&str` to create a `Respose` with no body
+  /// Construct a new [Response] from its parts.
+  /// Use an empty `&str` to create a [Respose] with no reason phrase
+  /// Use an empty `&str` to create a [Respose] with no body
   pub fn new(status: u16, reason: &'a str, headers: Vec<crate::Header<'a>>, body: &'a [u8]) -> Response<'a> {
     Self {
       status,
@@ -35,11 +34,11 @@ impl<'a> Response<'a> {
   pub fn status(&self) -> u16 {self.status}
   /// The reason phrase of the response or an empty string if it doesn't exist
   pub fn reason(&self) -> &'a str {self.reason}
-  /// The http response headers
+  /// The HTTP response headers
   pub fn headers(&self) -> &'a [Header] {&self.headers}
   /// The body of the response or an empty slice if there is no body
   pub fn body(&self) -> &'a [u8] {self.body}
-  /// The byte representation of the `Response` transmittible over wire
+  /// The byte representation of the [Response] transmittible over wire
   #[inline]
   pub fn bytes(&self) -> Vec<u8> {
     let mut bytes = Vec::new();
@@ -58,7 +57,7 @@ impl<'a> Response<'a> {
     bytes.extend(self.body);
     bytes
   }
-  /// Parses an http response
+  /// Parses the bytes of an HTTP response into a [Response]
   #[inline]
   pub fn parse(slice: &'a [u8]) -> Result<Response<'a>> {
     parse_http_version(slice)?;
