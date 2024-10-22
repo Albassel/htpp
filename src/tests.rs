@@ -8,8 +8,7 @@ macro_rules! req {
     #[test]
     fn $name() {
       let buf = $buf;
-      let mut parser = crate::request::RequestParser::new(buf);
-      let req = parser.parse().unwrap();
+      let mut req = crate::request::Request::parse(buf).unwrap();
       closure(req);
       fn closure($arg: crate::request::Request) {
           $body
@@ -22,8 +21,7 @@ macro_rules! req {
     #[should_panic]
     fn $name() {
       let buf = $buf;
-      let mut parser = crate::request::RequestParser::new(buf);
-      let req = parser.parse().unwrap();
+      let mut req = crate::request::Request::parse(buf).unwrap();
       }
   );
 }
@@ -35,7 +33,7 @@ req! {
     test_request_simple,
     b"GET / HTTP/1.1\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 0);
     }
@@ -45,7 +43,7 @@ req! {
     test_request_simple_with_query_params,
     b"GET /thing?data=a HTTP/1.1\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/thing?data=a");
         assert_eq!(req.headers().len(), 0);
     }
@@ -55,7 +53,7 @@ req! {
     test_request_headers,
     b"GET / HTTP/1.1\r\nHost: foo.com\r\nCookie: \r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 2);
         assert_eq!(req.headers()[0].name, "Host");
@@ -70,7 +68,7 @@ req! {
     test_request_header_value_htab_short,
     b"GET / HTTP/1.1\r\nUser-Agent: some\tagent\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 1);
         assert_eq!(req.headers()[0].name, "User-Agent");
@@ -83,7 +81,7 @@ req! {
     test_request_header_value_htab_long,
     b"GET / HTTP/1.1\r\nUser-Agent: 1234567890some\t1234567890agent1234567890\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 1);
         assert_eq!(req.headers()[0].name, "User-Agent");
@@ -95,7 +93,7 @@ req! {
     test_request_header_no_space_after_colon,
     b"GET / HTTP/1.1\r\nUser-Agent:omg-no-space1234567890some1234567890agent1234567890\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 1);
         assert_eq!(req.headers()[0].name, "User-Agent");
@@ -107,7 +105,7 @@ req! {
     test_request_with_string_body,
     b"GET / HTTP/1.1\r\nUser-Agent: foo.com\r\n\r\na string body",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 1);
         assert_eq!(req.headers()[0].name, "User-Agent");
@@ -120,7 +118,7 @@ req! {
     test_request_with_non_utf8_body,
     b"GET / HTTP/1.1\r\nUser-Agent: foo.com\r\n\r\n\xe0\x3e\x38\x2e\x7e",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 1);
         assert_eq!(req.headers()[0].name, "User-Agent");
@@ -133,7 +131,7 @@ req! {
     test_request_multibyte,
     b"GET / HTTP/1.1\r\nHost: foo.com\r\nUser-Agent: \xe3\x81\xb2\xe3/1.0\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), &Method::Get);
+        assert_eq!(req.method(), Method::Get);
         assert_eq!(req.path(), "/");
         assert_eq!(req.headers().len(), 2);
         assert_eq!(req.headers()[0].name, "Host");
@@ -204,8 +202,7 @@ macro_rules! res {
     #[test]
     fn $name() {
       let buf = $buf;
-      let mut parser = crate::response::ResponseParser::new(buf);
-      let res = parser.parse().unwrap();
+      let mut res = crate::response::Response::parse(buf).unwrap();
       closure(res);
       fn closure($arg: crate::response::Response) {
           $body
@@ -218,8 +215,7 @@ macro_rules! res {
     #[should_panic]
     fn $name() {
       let buf = $buf;
-      let mut parser = crate::response::ResponseParser::new(buf);
-      let req = parser.parse().unwrap();
+      let mut res = crate::response::Response::parse(buf).unwrap();
       }
   );
 }

@@ -7,7 +7,7 @@ const REQ_SHORT: &[u8] = b"GET / HTTP/1.1\r\n\
 Host: example.com\r\n\
 Cookie: session=60; user_id=1\r\n\r\n";
 
-const REQ: &[u8] = b"GET /wp-content/uploads/2010/03/hello-kitty-darth-vader-pink.jpg HTTP/1.1\r\n\
+const REQ: &[u8] = b"GET /wp-content/uploads/pink.jpg HTTP/1.1\r\n\
 Host: www.kittyhell.com\r\n\
 User-Agent: Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; ja-JP-mac; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3 Pathtraq/0.9\r\n\
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n\
@@ -21,8 +21,7 @@ Cookie: wp_ozh_wsa_visits=2; wp_ozh_wsa_visit_lasttime=xxxxxxxxxx; __utma=xxxxxx
 fn req(c: &mut Criterion) {
   c.benchmark_group("req")
     .bench_function("req", |b| b.iter(|| {
-      let mut parser = htpp::request::RequestParser::new(REQ);
-      black_box(parser.parse().unwrap());
+      black_box(htpp::Request::parse(REQ).unwrap());
     }));
 }
 
@@ -30,8 +29,7 @@ fn req(c: &mut Criterion) {
 fn req_short(c: &mut Criterion) {
   c.benchmark_group("req_short")
     .bench_function("req_short", |b| b.iter(|| {
-      let mut parser = htpp::request::RequestParser::new(REQ_SHORT);
-      black_box(parser.parse().unwrap());
+      black_box(htpp::Request::parse(REQ_SHORT).unwrap());
   }));
 }
 
@@ -63,16 +61,14 @@ Cookie: wp_ozh_wsa_visits=2; wp_ozh_wsa_visit_lasttime=xxxxxxxxxx; __utma=xxxxxx
 fn resp(c: &mut Criterion) {
   c.benchmark_group("resp")
     .bench_function("resp", |b| b.iter(|| {
-      let mut parser = htpp::response::ResponseParser::new(RESP);
-      black_box(parser.parse().unwrap());
+      black_box(htpp::Response::parse(RESP).unwrap());
   }));
 }
 
 fn resp_short(c: &mut Criterion) {
   c.benchmark_group("resp_short")
     .bench_function("resp_short", |b| b.iter(|| {
-      let mut parser = htpp::response::ResponseParser::new(RESP_SHORT);
-      black_box(parser.parse().unwrap());
+      black_box(htpp::Response::parse(RESP_SHORT).unwrap());
   }));
 }
 
