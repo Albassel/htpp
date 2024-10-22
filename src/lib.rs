@@ -145,7 +145,8 @@ impl<'a> fmt::Display for Header<'a> {
     }
 }
 impl<'a> Header<'a> {
-  fn new(name: &'a str, val: &'a [u8]) -> Self {
+  /// Create a new HTTP header with the given name and value
+  pub fn new(name: &'a str, val: &'a [u8]) -> Self {
     Self {
         name,
         val

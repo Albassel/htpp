@@ -29,7 +29,7 @@ impl<'a> Request<'a> {
       body
     }
   }
-  /// The HTTP request method. Either [Method::Get], [Method::Post], or [Method::Put]
+  /// The HTTP request method. Either `Method::Get`, `Method::Post`, or `Method::Put`
   pub fn method(&self) -> Method {self.method.clone()}
   /// The target URL for the request
   pub fn path(&self) -> &'a str {self.path}
@@ -38,7 +38,7 @@ impl<'a> Request<'a> {
   /// The body of the request or an empty slice if there is no body
   pub fn body(&self) -> &'a [u8] {self.body}
   #[inline]
-  /// The byte representation of the [Request] transmittible over wire
+  /// The byte representation of the Request transmittible over wire
   pub fn as_bytes(&self) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend(format!("{} {} HTTP/1.1\r\n", self.method, self.path).as_bytes());
@@ -52,7 +52,7 @@ impl<'a> Request<'a> {
     bytes.extend(self.body);
     bytes
   }
-   /// Parses the bytes of an HTTP response into a [Request]
+   /// Parses the bytes of an HTTP request into a `Request`
   #[inline]
   pub fn parse(slice: &'a [u8]) -> Result<Request<'a>> {
     if slice.len() < 14 {return Err(Error::Malformed);}
