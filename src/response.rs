@@ -7,7 +7,7 @@
 )]
 
 use std::fmt;
-use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, REASON_PHRASE_SAFE};
+use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, HEADER_NAME_SAFE};
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -146,7 +146,7 @@ fn parse_status(slice: &[u8]) -> Result<(u16, &str, usize)> {
 #[inline]
 fn parse_reason(slice: &[u8]) -> Result<(&str, usize)> {
   for (counter, character) in slice.iter().enumerate() {
-    if REASON_PHRASE_SAFE.binary_search(character).is_ok() {
+    if HEADER_NAME_SAFE[*character as usize] {
       continue;
     } else if *character == CR {
       let reason = &slice[..counter];

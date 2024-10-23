@@ -127,7 +127,7 @@ fn parse_method(slice: &[u8]) -> Result<(Method, usize)> {
 // parses the path and removes the space after making sure it only contains URL safe characters
 fn parse_path(slice: &[u8]) -> Result<(&str, usize)> {
   for (counter, character) in slice.iter().enumerate() {
-    if URL_SAFE.binary_search(character).is_ok() {
+    if URL_SAFE[*character as usize] {
       continue;
     } else if *character == SPACE {
       let path = &slice[..counter];

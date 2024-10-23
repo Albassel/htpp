@@ -6,7 +6,7 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-//! # httpp
+//! # htpp
 //!
 //! A library for parsing HTTP requests and responses. The focus is on speed and safety. It is intentionally strict
 //! to prevent possible HTTP attacks
@@ -16,7 +16,7 @@
 //! You can parse a request as follows:
 //! 
 //! ```rust
-//! use http::Request;
+//! use htpp::Request;
 //! 
 //! let req = b"GET /index.html HTTP/1.1\r\n\r\n";
 //! let parsed = Request::parse(req).unwrap();
@@ -26,21 +26,21 @@
 //! You can create a request as follows:
 //! 
 //! ```rust
-//! use http::{Method, Request, Header};
+//! use htpp::{Method, Request, Header};
 //! 
 //! let method = Method::Get;
 //! let path = "/index.html";
-//! let headers = vec![Header::new("Accept", "*/*")];
-//! let req = Request::new(method, path, headers);
+//! let headers = vec![Header::new("Accept", b"*/*")];
+//! let req = Request::new(method, path, headers, b"");
 //! ```
 //! ## Working with [Response]
 //! 
 //! You can parse a response as follows:
 //! 
 //! ```rust
-//! use http::Response;
+//! use htpp::Response;
 //! 
-//! let req = b"HTTP/1.1 200 OK GET\r\n\r\n";
+//! let req = b"HTTP/1.1 200 OK\r\n\r\n";
 //! let parsed = Response::parse(req).unwrap();
 //! assert!(parsed.status() == 200);
 //! assert!(parsed.reason() == "OK");
@@ -49,12 +49,12 @@
 //! You can create a response as follows:
 //! 
 //! ```rust
-//! use http::{Response, Header};
+//! use htpp::{Response, Header};
 //! 
 //! let status = 200;
 //! let reason = "OK";
-//! let headers = vec![Header::new("Connection", "keep-alive")];
-//! let req = Response::new(method, path, headers);
+//! let headers = vec![Header::new("Connection", b"keep-alive")];
+//! let req = Response::new(status, reason, headers, b"");
 //! ```
 //! 
 
@@ -77,12 +77,64 @@ const COLON: u8 = 58;
 const HTAB: u8 = 9;
 /// A result holding a parse error
 pub type Result<T> = std::result::Result<T, Error>;
-const URL_SAFE: [u8; 79] = [
-    33,36,38,39,40,41,42,43,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,61,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,95,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122
+
+macro_rules! byte_map {
+    ($($flag:expr,)*) => ([
+        $($flag != 0,)*
+    ])
+}
+
+static URL_SAFE: [bool; 256] = byte_map! [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//  \w !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /
+    0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1,
+//  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+//   ====== Extended ASCII  ======
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
-const REASON_PHRASE_SAFE: [u8; 53] = [
-    32,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,97,98,99,100,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122
+
+static HEADER_NAME_SAFE: [bool; 256] = byte_map![
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+//  \w !  "  #  $  %  &  '  (  )  *  +  ,  -  .  /
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+//  0  1  2  3  4  5  6  7  8  9  :  ;  <  =  >  ?
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+//  @  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  P  Q  R  S  T  U  V  W  X  Y  Z  [  \  ]  ^  _
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+//  `  a  b  c  d  e  f  g  h  i  j  k  l  m  n  o
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+//  p  q  r  s  t  u  v  w  x  y  z  {  |  }  ~  del
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 ];
+
 
 
 #[derive(Debug, PartialEq, Eq)]
@@ -164,7 +216,7 @@ fn parse_headers(slice: &[u8]) -> Result<(Vec<crate::Header>, usize)> {
     offset += name.1;
     let val = parse_header_value(&slice[offset..])?;
     offset += val.1;
-    headers.push(crate::Header::new(name.0, val.0));
+    headers.push(Header::new(name.0, val.0));
   }
   Ok((headers, offset+2))
 }
@@ -172,7 +224,7 @@ fn parse_headers(slice: &[u8]) -> Result<(Vec<crate::Header>, usize)> {
 // parses the header name and removes the `:` character and any spaces after it
 fn parse_header_name(slice: &[u8]) -> Result<(&str, usize)> {
   for (counter, character) in slice.iter().enumerate() {
-    if (97..=122).contains(character) || (65..=90).contains(character) || *character == 45 {
+    if HEADER_NAME_SAFE[*character as usize] {
       continue;
     } else if *character == COLON {
       let name = &slice[..counter];
