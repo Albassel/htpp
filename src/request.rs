@@ -39,7 +39,7 @@ impl<'a> Request<'a> {
   pub fn body(&self) -> &'a [u8] {self.body}
   #[inline]
   /// The byte representation of the Request transmittible over wire
-  pub fn as_bytes(&self) -> Vec<u8> {
+  pub fn bytes(&self) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend(format!("{} {} HTTP/1.1\r\n", self.method, self.path).as_bytes());
     for header in self.headers.iter() {
