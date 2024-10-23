@@ -13,7 +13,7 @@ exclude = [
     ".gitignore",
     "README.md"
 ]
-#documentation="URL of package docs"
+documentation="https://docs.rs/htpp/latest/htpp/"
 
 
 [[bench]]
