@@ -85,9 +85,11 @@ const URL: &[u8] = b"/path/path.html/user?query1=value&query2=value&query3=value
 
 fn url(c: &mut Criterion) {
   c.benchmark_group("url")
-    .bench_function("url", |b| b.iter(|| {
-      black_box(htpp::Url::parse(URL).unwrap());
-  }));
+  .bench_function("url", |b| b.iter_batched_ref(|| {
+      [htpp::EMPTY_QUERY; 10]
+  },|queries| {
+    black_box(htpp::Url::parse(URL, queries).unwrap());
+  }, criterion::BatchSize::SmallInput));
 }
 
 

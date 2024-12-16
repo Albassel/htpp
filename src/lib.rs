@@ -20,8 +20,8 @@
 //! 
 //! let req = b"GET /index.html HTTP/1.1\r\n\r\n";
 //! let parsed = Request::parse(req).unwrap();
-//! assert!(parsed.method() == htpp::Method::Get);
-//! assert!(parsed.path() == "/index.html");
+//! assert!(parsed.method == htpp::Method::Get);
+//! assert!(parsed.path == "/index.html");
 //! ```
 //! You can create a request as follows:
 //! 
@@ -42,8 +42,8 @@
 //! 
 //! let req = b"HTTP/1.1 200 OK\r\n\r\n";
 //! let parsed = Response::parse(req).unwrap();
-//! assert!(parsed.status() == 200);
-//! assert!(parsed.reason() == "OK");
+//! assert!(parsed.status == 200);
+//! assert!(parsed.reason == "OK");
 //! ```
 //! 
 //! You can create a response as follows:
@@ -57,6 +57,21 @@
 //! let req = Response::new(status, reason, headers, b"");
 //! ```
 //! 
+//! After parsing a request, you can also parse the path part of the request inclusing query parameters as follows:
+//! 
+//! ```rust
+//! use htpp::{Request, EMPTY_QUERY, Url};
+//! 
+//! let req = b"GET /index.html?query1=value&query2=value HTTP/1.1\r\n\r\n";
+//! let parsed_req = Request::parse(req).unwrap();
+//! let mut queries_buf = [EMPTY_QUERY; 10];
+//! let url = Url::parse(parsed.path, queries_buf);
+//! assert!(url.path == "/index.html");
+//! assert!(url.query_params.unwrap()[0].name == "query1");
+//! assert!(url.query_params.unwrap()[0].val == "value");
+//! ```
+//! 
+//! 
 
 use core::{str, fmt};
 
@@ -69,7 +84,7 @@ mod uri;
 
 pub use request::{Method, Request};
 pub use response::Response;
-pub use uri::Url;
+pub use uri::{Url, QueryParam, EMPTY_QUERY};
 
 
 const SPACE: u8 = 32;

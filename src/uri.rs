@@ -11,6 +11,40 @@ use std::{collections::HashMap, fmt, path::Path};
 
 use crate::URL_SAFE;
 
+
+
+/// An ampty query parameter for ease of parsing
+pub const EMPTY_QUERY: QueryParam = QueryParam {name: "", val: ""};
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+/// A URL query parameter
+pub struct QueryParam<'a> {
+    /// The name of the query parameter
+    pub name: &'a str,
+    /// The value of the query parameter
+    pub val: &'a str,
+}
+impl<'a> fmt::Display for QueryParam<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(format!("{}={}", self.name, self.val).as_str())
+    }
+}
+impl<'a> QueryParam<'a> {
+  /// Create a new HTTP header with the given name and value
+  pub fn new(name: &'a str, val: &'a str) -> Self {
+    Self {
+        name,
+        val
+    }
+  }
+}
+
+
+
+
+
+
+
 /// All errors that could result from parsing a URL
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub enum UrlError {
@@ -18,24 +52,24 @@ pub enum UrlError {
   Path,
   /// An error while parsing the query parameters part of the URL
   Query,
+  /// The URL has more query parameters than the length of the buffer passed
+  TooManyQueryParams
 }
 
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 /// The path and query parameters part of an HTTP URL
-pub struct Url<'a> {
+pub struct Url<'a, 'queries> {
     /// The path part for the URL
     pub path: &'a str,
     /// The query parameters part for the URL
-    pub query_params: Option<HashMap<&'a str, &'a str>>,
+    pub query_params: Option<&'queries [QueryParam<'a>]>,
 }
 
 
-impl<'a> Url<'a> {
+impl<'a, 'queries> Url<'a, 'queries> {
   /// Construct a new `Url` from its parts.
-  /// Use an empty `&str` to create a `Respose` with no reason phrase
-  /// Use an empty `&str` to create a `Respose` with no body
-  pub fn new(path: &'a str, query_params: Option<HashMap<&'a str, &'a str>>) -> Url<'a> {
+  pub fn new(path: &'a str, query_params: Option<&'queries [QueryParam<'a>]>) -> Url<'a, 'queries> {
     if path.is_empty() {
       return Self {
         path: "/",
@@ -50,31 +84,33 @@ impl<'a> Url<'a> {
 
 
   /// Parses the bytes of an HTTP URL into a `Url`
-  // The URL you parse must be valid UTF-8 and must be stripped of the leading protocol and authority parts or an Err is returned
+  // The URL you parse must be valid UTF-8 and must be stripped of the leading protocol and authority parts or an Err(UrlError::Path) is returned
+  /// If you pass an empty `queries_buf`, it will not parse query parameters
+  /// If there is more query parameters than the length of the passed `queries_buf`, an Err(UrlError::TooManyQueryParams) is returned
   #[inline]
-  pub fn parse(slice: &'a [u8]) -> Result<Url, UrlError> {
+  pub fn parse(slice: &'a [u8], queries_buf: &'queries mut [QueryParam<'a>]) -> Result<Url<'a, 'queries>, UrlError> {
     let mut offset = 0;
     let path = parse_path(slice)?;
     offset += path.1;
-    if offset == slice.len() {
+    if offset == slice.len() || queries_buf.is_empty(){
       return Ok(Url{path: path.0, query_params: None});
     }
-    let params = parse_query_params(&slice[offset..])?;
-    Ok(Url{path: path.0, query_params: Some(params)})
+    parse_query_params(&slice[offset..], queries_buf)?;
+    Ok(Url{path: path.0, query_params: Some(queries_buf)})
   }
 }
 
 
-impl<'a> fmt::Display for Url<'a> {
+impl<'a, 'queries> fmt::Display for Url<'a, 'queries> {
     /// The string representation of the URL
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
       match &self.query_params {
-        Some(map) => {
+        Some(queries) => {
           let mut params = String::new();
-          for (query, val) in map.iter() {
-            params.push_str(query);
+          for query in queries.iter() {
+            params.push_str(query.name);
             params.push('=');
-            params.push_str(val);
+            params.push_str(query.val);
             params.push('&');
           }
           params.pop();
@@ -107,17 +143,18 @@ fn parse_path(slice: &[u8]) -> Result<(&str, usize), UrlError> {
 
 
 #[inline]
-fn parse_query_params(slice: &[u8]) -> Result<HashMap<&str, &str>, UrlError> {
-  let mut query_params = HashMap::new();
+fn parse_query_params<'a>(slice: &'a [u8], queries_buf: &mut [QueryParam<'a>]) -> Result<(), UrlError> {
   let mut offset = 0;
+  let mut iteration = 0;
   while offset < slice.len() {
+    if iteration > queries_buf.len() {return Err(UrlError::TooManyQueryParams);}
     let name = parse_query_param_name(&slice[offset..])?;
     offset += name.1;
     let val = parse_query_param_value(&slice[offset..])?;
     offset += val.1;
-    query_params.insert(name.0, val.0);
-  }
-  Ok(query_params)
+    queries_buf[iteration] = QueryParam::new(name.0, val.0);;
+  };
+  Ok(())
 }
 
 

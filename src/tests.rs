@@ -323,7 +323,8 @@ macro_rules! url {
     #[test]
     fn $name() {
       let buf = $buf;
-      let mut url = crate::uri::Url::parse(buf).unwrap();
+      let mut queries = [crate::uri::EMPTY_QUERY; 10];
+      let mut url = crate::uri::Url::parse(buf, &mut queries).unwrap();
       closure(url);
       fn closure($arg: crate::uri::Url) {
           $body
@@ -338,9 +339,9 @@ url! {
     b"/path/path.html/user?query1=value&query2=value&query3=value",
     |url| {
         assert_eq!(url.path, "/path/path.html/user");
-        assert_eq!(url.query_params.as_ref().unwrap().len(), 3);
-        assert_eq!(url.query_params.as_ref().unwrap().get("query1").unwrap(), &"value");
-        assert_eq!(url.query_params.as_ref().unwrap().get("query3").unwrap(), &"value");
+        assert_eq!(url.query_params.unwrap().len(), 3);
+        assert_eq!(url.query_params.as_ref().unwrap()[0].name, "query1");
+        assert_eq!(url.query_params.as_ref().unwrap()[0].val, "value");
     }
 }
 
