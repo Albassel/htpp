@@ -33,9 +33,9 @@ req! {
     test_request_simple,
     b"GET / HTTP/1.1\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 0);
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 0);
     }
 }
 
@@ -43,9 +43,9 @@ req! {
     test_request_simple_with_query_params,
     b"GET /thing?data=a HTTP/1.1\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/thing?data=a");
-        assert_eq!(req.headers().len(), 0);
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/thing?data=a");
+        assert_eq!(req.headers.len(), 0);
     }
 }
 
@@ -53,13 +53,13 @@ req! {
     test_request_headers,
     b"GET / HTTP/1.1\r\nHost: foo.com\r\nCookie: \r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 2);
-        assert_eq!(req.headers()[0].name, "Host");
-        assert_eq!(req.headers()[0].val, b"foo.com");
-        assert_eq!(req.headers()[1].name, "Cookie");
-        assert_eq!(req.headers()[1].val, b"");
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 2);
+        assert_eq!(req.headers[0].name, "Host");
+        assert_eq!(req.headers[0].val, b"foo.com");
+        assert_eq!(req.headers[1].name, "Cookie");
+        assert_eq!(req.headers[1].val, b"");
     }
 }
 
@@ -68,11 +68,11 @@ req! {
     test_request_header_value_htab_short,
     b"GET / HTTP/1.1\r\nUser-Agent: some\tagent\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 1);
-        assert_eq!(req.headers()[0].name, "User-Agent");
-        assert_eq!(req.headers()[0].val, b"some\tagent");
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers[0].name, "User-Agent");
+        assert_eq!(req.headers[0].val, b"some\tagent");
     }
 }
 
@@ -81,11 +81,11 @@ req! {
     test_request_header_value_htab_long,
     b"GET / HTTP/1.1\r\nUser-Agent: 1234567890some\t1234567890agent1234567890\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 1);
-        assert_eq!(req.headers()[0].name, "User-Agent");
-        assert_eq!(req.headers()[0].val, &b"1234567890some\t1234567890agent1234567890"[..]);
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers[0].name, "User-Agent");
+        assert_eq!(req.headers[0].val, &b"1234567890some\t1234567890agent1234567890"[..]);
     }
 }
 
@@ -93,11 +93,11 @@ req! {
     test_request_header_no_space_after_colon,
     b"GET / HTTP/1.1\r\nUser-Agent:omg-no-space1234567890some1234567890agent1234567890\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 1);
-        assert_eq!(req.headers()[0].name, "User-Agent");
-        assert_eq!(req.headers()[0].val, &b"omg-no-space1234567890some1234567890agent1234567890"[..]);
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers[0].name, "User-Agent");
+        assert_eq!(req.headers[0].val, &b"omg-no-space1234567890some1234567890agent1234567890"[..]);
     }
 }
 
@@ -105,12 +105,12 @@ req! {
     test_request_with_string_body,
     b"GET / HTTP/1.1\r\nUser-Agent: foo.com\r\n\r\na string body",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 1);
-        assert_eq!(req.headers()[0].name, "User-Agent");
-        assert_eq!(req.headers()[0].val, b"foo.com");
-        assert_eq!(req.body(), b"a string body");
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers[0].name, "User-Agent");
+        assert_eq!(req.headers[0].val, b"foo.com");
+        assert_eq!(req.body, b"a string body");
     }
 }
 
@@ -118,12 +118,12 @@ req! {
     test_request_with_non_utf8_body,
     b"GET / HTTP/1.1\r\nUser-Agent: foo.com\r\n\r\n\xe0\x3e\x38\x2e\x7e",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 1);
-        assert_eq!(req.headers()[0].name, "User-Agent");
-        assert_eq!(req.headers()[0].val, b"foo.com");
-        assert_eq!(req.body(), b"\xe0\x3e\x38\x2e\x7e");
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 1);
+        assert_eq!(req.headers[0].name, "User-Agent");
+        assert_eq!(req.headers[0].val, b"foo.com");
+        assert_eq!(req.body, b"\xe0\x3e\x38\x2e\x7e");
     }
 }
 
@@ -131,13 +131,13 @@ req! {
     test_request_multibyte,
     b"GET / HTTP/1.1\r\nHost: foo.com\r\nUser-Agent: \xe3\x81\xb2\xe3/1.0\r\n\r\n",
     |req| {
-        assert_eq!(req.method(), Method::Get);
-        assert_eq!(req.path(), "/");
-        assert_eq!(req.headers().len(), 2);
-        assert_eq!(req.headers()[0].name, "Host");
-        assert_eq!(req.headers()[0].val, b"foo.com");
-        assert_eq!(req.headers()[1].name, "User-Agent");
-        assert_eq!(req.headers()[1].val, b"\xe3\x81\xb2\xe3/1.0");
+        assert_eq!(req.method, Method::Get);
+        assert_eq!(req.path, "/");
+        assert_eq!(req.headers.len(), 2);
+        assert_eq!(req.headers[0].name, "Host");
+        assert_eq!(req.headers[0].val, b"foo.com");
+        assert_eq!(req.headers[1].name, "User-Agent");
+        assert_eq!(req.headers[1].val, b"\xe3\x81\xb2\xe3/1.0");
     }
 }
 
@@ -224,8 +224,8 @@ res! {
     test_response_simple,
     b"HTTP/1.1 200 OK\r\n\r\n",
     |res| {
-        assert_eq!(res.status(), 200);
-        assert_eq!(res.reason(), "OK");
+        assert_eq!(res.status, 200);
+        assert_eq!(res.reason, "OK");
     }
 }
 
@@ -239,8 +239,8 @@ res! {
     test_response_reason_missing,
     b"HTTP/1.1 200 \r\n\r\n",
     |res| {
-        assert_eq!(res.status(), 200);
-        assert_eq!(res.reason(), "");
+        assert_eq!(res.status, 200);
+        assert_eq!(res.reason, "");
     }
 }
 
@@ -249,8 +249,8 @@ res! {
     b"HTTP/1.1 200\r\n\r\n",
     |res| {
         
-        assert_eq!(res.status(), 200);
-        assert_eq!(res.reason(), "");
+        assert_eq!(res.status, 200);
+        assert_eq!(res.reason, "");
     }
 }
 
@@ -258,12 +258,11 @@ res! {
     test_response_reason_missing_no_space_with_headers,
     b"HTTP/1.1 200\r\nFoo: bar\r\n\r\n",
     |res| {
-        
-        assert_eq!(res.status(), 200);
-        assert_eq!(res.reason(), "");
-        assert_eq!(res.headers().len(), 1);
-        assert_eq!(res.headers()[0].name, "Foo");
-        assert_eq!(res.headers()[0].val, b"bar");
+        assert_eq!(res.status, 200);
+        assert_eq!(res.reason, "");
+        assert_eq!(res.headers.len(), 1);
+        assert_eq!(res.headers[0].name, "Foo");
+        assert_eq!(res.headers[0].val, b"bar");
     }
 }
 
@@ -309,5 +308,40 @@ res! {
     should_panic
 }
 
+
+
+
+// --------------------------
+//  TESTING URL PARSING
+// --------------------------
+
+
+
+
+macro_rules! url {
+  ($name:ident, $buf:expr, |$arg:ident| $body:expr) => (
+    #[test]
+    fn $name() {
+      let buf = $buf;
+      let mut url = crate::uri::Url::parse(buf).unwrap();
+      closure(url);
+      fn closure($arg: crate::uri::Url) {
+          $body
+      }
+      }
+  );
+}
+
+
+url! {
+    test_url,
+    b"/path/path.html/user?query1=value&query2=value&query3=value",
+    |url| {
+        assert_eq!(url.path, "/path/path.html/user");
+        assert_eq!(url.query_params.as_ref().unwrap().len(), 3);
+        assert_eq!(url.query_params.as_ref().unwrap().get("query1").unwrap(), &"value");
+        assert_eq!(url.query_params.as_ref().unwrap().get("query3").unwrap(), &"value");
+    }
+}
 
 

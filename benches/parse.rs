@@ -74,6 +74,25 @@ fn resp_short(c: &mut Criterion) {
 
 
 
+
+//--------------
+// Benchmarking URL parsing
+//--------------
+
+
+
+const URL: &[u8] = b"/path/path.html/user?query1=value&query2=value&query3=value";
+
+fn url(c: &mut Criterion) {
+  c.benchmark_group("url")
+    .bench_function("url", |b| b.iter(|| {
+      black_box(htpp::Url::parse(URL).unwrap());
+  }));
+}
+
+
+
+
 //--------------
 // Running the benchmarks
 //--------------
@@ -86,6 +105,6 @@ const SAMPLES: usize = 400;
 criterion_group!{
     name = benches;
     config = Criterion::default().sample_size(SAMPLES).warm_up_time(WARMUP).measurement_time(MTIME);
-    targets = req, req_short, resp, resp_short
+    targets = req, req_short, resp, resp_short, url
 }
 criterion_main!(benches);

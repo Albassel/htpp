@@ -9,7 +9,7 @@
 //! # htpp
 //!
 //! A library for parsing HTTP requests and responses. The focus is on speed and safety. It is intentionally strict
-//! to prevent possible HTTP attacks
+//! to minimize HTTP attacks. It can also parse URLs
 //! 
 //! ## Working with [Request]
 //! 
@@ -65,9 +65,11 @@ use core::{str, fmt};
 mod tests;
 mod request;
 mod response;
+mod uri;
 
 pub use request::{Method, Request};
 pub use response::Response;
+pub use uri::Url;
 
 
 const SPACE: u8 = 32;

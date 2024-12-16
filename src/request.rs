@@ -12,10 +12,14 @@ use crate::{Error, HttpVer, Result, SPACE, URL_SAFE, Header, parse_headers};
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// A parsed HTTP request
 pub struct Request<'a> {
-    method: Method,
-    path: &'a str,
-    headers: Vec<crate::Header<'a>>,
-    body: &'a [u8],
+    /// The HTTP request method. Either `Method::Get`, `Method::Post`, or `Method::Put`
+    pub method: Method,
+    /// The target URL for the request
+    pub path: &'a str,
+    /// The HTTP request headers
+    pub headers: Vec<crate::Header<'a>>,
+    /// The body of the request or an empty slice if there is no body
+    pub body: &'a [u8],
 }
 impl<'a> Request<'a> {
   /// Construct a new Response from its parts
@@ -29,17 +33,10 @@ impl<'a> Request<'a> {
       body
     }
   }
-  /// The HTTP request method. Either `Method::Get`, `Method::Post`, or `Method::Put`
-  pub fn method(&self) -> Method {self.method.clone()}
-  /// The target URL for the request
-  pub fn path(&self) -> &'a str {self.path}
-  /// The HTTP request headers
-  pub fn headers(&self) -> &'a [Header] {&self.headers}
-  /// The body of the request or an empty slice if there is no body
-  pub fn body(&self) -> &'a [u8] {self.body}
+
   #[inline]
   /// The byte representation of the Request transmittible over wire
-  pub fn bytes(&self) -> Vec<u8> {
+  pub fn as_bytes(&self) -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.extend(format!("{} {} HTTP/1.1\r\n", self.method, self.path).as_bytes());
     for header in self.headers.iter() {

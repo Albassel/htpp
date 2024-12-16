@@ -13,10 +13,14 @@ use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, HEADER
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// A parsed http response
 pub struct Response<'a> {
-    status: u16,
-    reason: &'a str,
-    headers: Vec<Header<'a>>,
-    body: &'a [u8],
+    /// The status code of the response
+    pub status: u16,
+    /// The reason phrase of the response or an empty string if it doesn't exist
+    pub reason: &'a str,
+    /// The HTTP response headers
+    pub headers: Vec<Header<'a>>,
+    /// The body of the response or an empty slice if there is no body
+    pub body: &'a [u8],
 }
 impl<'a> Response<'a> {
   /// Construct a new `Response` from its parts.
@@ -30,17 +34,9 @@ impl<'a> Response<'a> {
       body
     }
   }
-  /// The status code of the response
-  pub fn status(&self) -> u16 {self.status}
-  /// The reason phrase of the response or an empty string if it doesn't exist
-  pub fn reason(&self) -> &'a str {self.reason}
-  /// The HTTP response headers
-  pub fn headers(&self) -> &'a [Header] {&self.headers}
-  /// The body of the response or an empty slice if there is no body
-  pub fn body(&self) -> &'a [u8] {self.body}
   /// The byte representation of the `Response` transmittible over wire
   #[inline]
-  pub fn bytes(&self) -> Vec<u8> {
+  pub fn as_bytes(&self) -> Vec<u8> {
     let mut bytes = Vec::new();
     if self.reason.is_empty() {
       bytes.extend(format!("HTTP/1.1 {}\r\n", self.status).as_bytes());
