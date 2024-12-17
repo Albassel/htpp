@@ -86,7 +86,7 @@ mod uri;
 
 pub use request::{Method, Request};
 pub use response::Response;
-pub use uri::{Url, QueryParam, EMPTY_QUERY};
+pub use uri::{Url, QueryParam, EMPTY_QUERY, UrlError};
 
 
 const SPACE: u8 = 32;
