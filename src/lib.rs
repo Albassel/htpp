@@ -16,10 +16,11 @@
 //! You can parse a request as follows:
 //! 
 //! ```rust
-//! use htpp::Request;
+//! use htpp::{Request, EMPTY_HEADER};
 //! 
 //! let req = b"GET /index.html HTTP/1.1\r\n\r\n";
-//! let parsed = Request::parse(req).unwrap();
+//! let mut headers = [EMPTY_HEADER; 10];
+//! let parsed = Request::parse(req, &mut headers).unwrap();
 //! assert!(parsed.method == htpp::Method::Get);
 //! assert!(parsed.path == "/index.html");
 //! ```
@@ -30,18 +31,19 @@
 //! 
 //! let method = Method::Get;
 //! let path = "/index.html";
-//! let headers = vec![Header::new("Accept", b"*/*")];
-//! let req = Request::new(method, path, headers, b"");
+//! let mut headers = [Header::new("Accept", b"*/*")];
+//! let req = Request::new(method, path, &headers, b"");
 //! ```
 //! ## Working with [Response]
 //! 
 //! You can parse a response as follows:
 //! 
 //! ```rust
-//! use htpp::Response;
+//! use htpp::{Response, EMPTY_HEADER};
 //! 
 //! let req = b"HTTP/1.1 200 OK\r\n\r\n";
-//! let parsed = Response::parse(req).unwrap();
+//! let mut headers = [EMPTY_HEADER; 10];
+//! let parsed = Response::parse(req, &mut headers).unwrap();
 //! assert!(parsed.status == 200);
 //! assert!(parsed.reason == "OK");
 //! ```
@@ -53,24 +55,24 @@
 //! 
 //! let status = 200;
 //! let reason = "OK";
-//! let headers = vec![Header::new("Connection", b"keep-alive")];
-//! let req = Response::new(status, reason, headers, b"");
+//! let mut headers = [Header::new("Connection", b"keep-alive")];
+//! let req = Response::new(status, reason, &mut headers, b"");
 //! ```
 //! 
 //! After parsing a request, you can also parse the path part of the request inclusing query parameters as follows:
 //! 
 //! ```rust
-//! use htpp::{Request, EMPTY_QUERY, Url};
+//! use htpp::{Request, EMPTY_QUERY, Url, EMPTY_HEADER};
 //! 
 //! let req = b"GET /index.html?query1=value&query2=value HTTP/1.1\r\n\r\n";
-//! let parsed_req = Request::parse(req).unwrap();
+//! let mut headers = [EMPTY_HEADER; 10];
+//! let parsed_req = Request::parse(req, &mut headers).unwrap();
 //! let mut queries_buf = [EMPTY_QUERY; 10];
-//! let url = Url::parse(parsed.path, queries_buf);
+//! let url = Url::parse(parsed_req.path.as_bytes(), &mut queries_buf).unwrap();
 //! assert!(url.path == "/index.html");
 //! assert!(url.query_params.unwrap()[0].name == "query1");
 //! assert!(url.query_params.unwrap()[0].val == "value");
 //! ```
-//! 
 //! 
 
 use core::{str, fmt};
@@ -158,7 +160,9 @@ static HEADER_NAME_SAFE: [bool; 256] = byte_map![
 /// All parsing errors possible
 pub enum Error{
     /// The request is malformed and doesn't adhere to the standard
-    Malformed
+    Malformed,
+    /// The request has more headers than the length of the buffer you passed
+    TooManyHeaders
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -193,6 +197,8 @@ impl fmt::Display for HttpVer {
 // ---------------------
 
 
+/// An empty header to make it easier to construct a header buffer to parse headers into
+pub const EMPTY_HEADER: Header = Header{name: "", val: &[]};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 /// An HTTP header
@@ -224,18 +230,20 @@ impl<'a> Header<'a> {
 }
 
 #[inline]
-// Parses the headers with the empty line after them
-fn parse_headers(slice: &[u8]) -> Result<(Vec<crate::Header>, usize)> {
-  let mut headers = Vec::new();
+// Parses the headers into the passed headers_buf
+fn parse_headers<'a>(slice: &'a[u8], headers_buf: &mut [crate::Header<'a>]) -> Result<usize> {
   let mut offset = 0;
+  let mut iteration = 0;
   while &slice[offset..(offset+2)] != b"\r\n" {
+    if iteration > headers_buf.len() {return Err(Error::TooManyHeaders);}
     let name = parse_header_name(&slice[offset..])?;
     offset += name.1;
     let val = parse_header_value(&slice[offset..])?;
     offset += val.1;
-    headers.push(Header::new(name.0, val.0));
+    headers_buf[iteration] = Header::new(name.0, val.0);
+    iteration += 1;
   }
-  Ok((headers, offset+2))
+  Ok(offset+2)
 }
 #[inline]
 // parses the header name and removes the `:` character and any spaces after it

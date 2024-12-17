@@ -1,9 +1,9 @@
 [package]
 name = "htpp"
-version = "0.2.2"
+version = "0.3.0"
 edition = "2021"
 authors=["Basel"]
-description="A simple, fast, and secure http parser. It adheres strictly to the http specification, which is intentional as to be efficient and prevent possible http related attacks. It only supports http 1.1 but support for http 2.0 is planned"
+description="A simple, fast, and secure http parser. It strictly adheres to the http specification. It can also parse URLs including query parameters"
 keywords=["http", "parser"]
 repository="https://github.com/Albassel/htpp"
 license="MIT"
@@ -20,6 +20,11 @@ documentation="https://docs.rs/htpp/latest/htpp/"
 harness = false
 path = "benches/parse.rs"
 name = "parse"
+
+[profile.bench]
+lto = true
+codegen-units = 1
+opt-level = 3
 
 [dependencies]
 

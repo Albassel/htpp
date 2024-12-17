@@ -2,13 +2,13 @@
 use crate::{request::{self, Method}, response, Error, HttpVer};
 
 
-
 macro_rules! req {
   ($name:ident, $buf:expr, |$arg:ident| $body:expr) => (
     #[test]
     fn $name() {
       let buf = $buf;
-      let mut req = crate::request::Request::parse(buf).unwrap();
+      let mut headers = [crate::EMPTY_HEADER; 10];
+      let mut req = crate::request::Request::parse(buf, &mut headers).unwrap();
       closure(req);
       fn closure($arg: crate::request::Request) {
           $body
@@ -21,7 +21,8 @@ macro_rules! req {
     #[should_panic]
     fn $name() {
       let buf = $buf;
-      let mut req = crate::request::Request::parse(buf).unwrap();
+      let mut headers = [crate::EMPTY_HEADER; 10];
+      let mut req = crate::request::Request::parse(buf, &mut headers).unwrap();
       }
   );
 }
@@ -35,7 +36,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 0);
     }
 }
 
@@ -45,7 +45,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/thing?data=a");
-        assert_eq!(req.headers.len(), 0);
     }
 }
 
@@ -55,7 +54,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 2);
         assert_eq!(req.headers[0].name, "Host");
         assert_eq!(req.headers[0].val, b"foo.com");
         assert_eq!(req.headers[1].name, "Cookie");
@@ -70,7 +68,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 1);
         assert_eq!(req.headers[0].name, "User-Agent");
         assert_eq!(req.headers[0].val, b"some\tagent");
     }
@@ -83,7 +80,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 1);
         assert_eq!(req.headers[0].name, "User-Agent");
         assert_eq!(req.headers[0].val, &b"1234567890some\t1234567890agent1234567890"[..]);
     }
@@ -95,7 +91,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 1);
         assert_eq!(req.headers[0].name, "User-Agent");
         assert_eq!(req.headers[0].val, &b"omg-no-space1234567890some1234567890agent1234567890"[..]);
     }
@@ -107,7 +102,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 1);
         assert_eq!(req.headers[0].name, "User-Agent");
         assert_eq!(req.headers[0].val, b"foo.com");
         assert_eq!(req.body, b"a string body");
@@ -120,7 +114,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 1);
         assert_eq!(req.headers[0].name, "User-Agent");
         assert_eq!(req.headers[0].val, b"foo.com");
         assert_eq!(req.body, b"\xe0\x3e\x38\x2e\x7e");
@@ -133,7 +126,6 @@ req! {
     |req| {
         assert_eq!(req.method, Method::Get);
         assert_eq!(req.path, "/");
-        assert_eq!(req.headers.len(), 2);
         assert_eq!(req.headers[0].name, "Host");
         assert_eq!(req.headers[0].val, b"foo.com");
         assert_eq!(req.headers[1].name, "User-Agent");
@@ -202,7 +194,8 @@ macro_rules! res {
     #[test]
     fn $name() {
       let buf = $buf;
-      let mut res = crate::response::Response::parse(buf).unwrap();
+      let mut headers = [crate::EMPTY_HEADER; 10];
+      let mut res = crate::response::Response::parse(buf, &mut headers).unwrap();
       closure(res);
       fn closure($arg: crate::response::Response) {
           $body
@@ -215,7 +208,8 @@ macro_rules! res {
     #[should_panic]
     fn $name() {
       let buf = $buf;
-      let mut res = crate::response::Response::parse(buf).unwrap();
+      let mut headers = [crate::EMPTY_HEADER; 10];
+      let mut res = crate::response::Response::parse(buf, &mut headers).unwrap();
       }
   );
 }
@@ -260,7 +254,6 @@ res! {
     |res| {
         assert_eq!(res.status, 200);
         assert_eq!(res.reason, "");
-        assert_eq!(res.headers.len(), 1);
         assert_eq!(res.headers[0].name, "Foo");
         assert_eq!(res.headers[0].val, b"bar");
     }
@@ -339,7 +332,6 @@ url! {
     b"/path/path.html/user?query1=value&query2=value&query3=value",
     |url| {
         assert_eq!(url.path, "/path/path.html/user");
-        assert_eq!(url.query_params.unwrap().len(), 3);
         assert_eq!(url.query_params.as_ref().unwrap()[0].name, "query1");
         assert_eq!(url.query_params.as_ref().unwrap()[0].val, "value");
     }

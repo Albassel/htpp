@@ -18,20 +18,25 @@ Keep-Alive: 115\r\n\
 Connection: keep-alive\r\n\
 Cookie: wp_ozh_wsa_visits=2; wp_ozh_wsa_visit_lasttime=xxxxxxxxxx; __utma=xxxxxxxxx.xxxxxxxxxx.xxxxxxxxxx.xxxxxxxxxx.xxxxxxxxxx.x; __utmz=xxxxxxxxx.xxxxxxxxxx.x.x.utmccn=(referral)|utmcsr=reader.livedoor.com|utmcct=/reader/|utmcmd=referral|padding=under256\r\n\r\n";
 
+
 fn req(c: &mut Criterion) {
   c.benchmark_group("req")
-    .bench_function("req", |b| b.iter(|| {
-      black_box(htpp::Request::parse(REQ).unwrap());
-    }));
+  .bench_function("req", |b| b.iter_batched_ref(|| {
+      [htpp::EMPTY_HEADER; 20]
+  },|headers| {
+    black_box(htpp::Request::parse(REQ, headers).unwrap());
+  }, criterion::BatchSize::SmallInput));
 }
-
 
 fn req_short(c: &mut Criterion) {
   c.benchmark_group("req_short")
-    .bench_function("req_short", |b| b.iter(|| {
-      black_box(htpp::Request::parse(REQ_SHORT).unwrap());
-  }));
+  .bench_function("req_short", |b| b.iter_batched_ref(|| {
+      [htpp::EMPTY_HEADER; 20]
+  },|headers| {
+    black_box(htpp::Request::parse(REQ_SHORT, headers).unwrap());
+  }, criterion::BatchSize::SmallInput));
 }
+
 
 
 
@@ -60,16 +65,20 @@ Cookie: wp_ozh_wsa_visits=2; wp_ozh_wsa_visit_lasttime=xxxxxxxxxx; __utma=xxxxxx
 
 fn resp(c: &mut Criterion) {
   c.benchmark_group("resp")
-    .bench_function("resp", |b| b.iter(|| {
-      black_box(htpp::Response::parse(RESP).unwrap());
-  }));
+  .bench_function("resp", |b| b.iter_batched_ref(|| {
+      [htpp::EMPTY_HEADER; 20]
+  },|headers| {
+    black_box(htpp::Response::parse(RESP, headers).unwrap());
+  }, criterion::BatchSize::SmallInput));
 }
 
 fn resp_short(c: &mut Criterion) {
   c.benchmark_group("resp_short")
-    .bench_function("resp_short", |b| b.iter(|| {
-      black_box(htpp::Response::parse(RESP_SHORT).unwrap());
-  }));
+  .bench_function("resp_short", |b| b.iter_batched_ref(|| {
+      [htpp::EMPTY_HEADER; 20]
+  },|headers| {
+    black_box(htpp::Response::parse(RESP_SHORT, headers).unwrap());
+  }, criterion::BatchSize::SmallInput));
 }
 
 
@@ -101,9 +110,9 @@ fn url(c: &mut Criterion) {
 
 
 
-const WARMUP: Duration = Duration::from_millis(500);
+const WARMUP: Duration = Duration::from_millis(100);
 const MTIME: Duration = Duration::from_millis(100);
-const SAMPLES: usize = 400;
+const SAMPLES: usize = 200;
 criterion_group!{
     name = benches;
     config = Criterion::default().sample_size(SAMPLES).warm_up_time(WARMUP).measurement_time(MTIME);

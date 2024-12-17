@@ -66,7 +66,6 @@ pub struct Url<'a, 'queries> {
     pub query_params: Option<&'queries [QueryParam<'a>]>,
 }
 
-
 impl<'a, 'queries> Url<'a, 'queries> {
   /// Construct a new `Url` from its parts.
   pub fn new(path: &'a str, query_params: Option<&'queries [QueryParam<'a>]>) -> Url<'a, 'queries> {
@@ -84,7 +83,7 @@ impl<'a, 'queries> Url<'a, 'queries> {
 
 
   /// Parses the bytes of an HTTP URL into a `Url`
-  // The URL you parse must be valid UTF-8 and must be stripped of the leading protocol and authority parts or an Err(UrlError::Path) is returned
+  /// The URL you parse must be valid UTF-8 and must be stripped of the leading protocol and authority parts or an Err(UrlError::Path) is returned
   /// If you pass an empty `queries_buf`, it will not parse query parameters
   /// If there is more query parameters than the length of the passed `queries_buf`, an Err(UrlError::TooManyQueryParams) is returned
   #[inline]
@@ -124,8 +123,6 @@ impl<'a, 'queries> fmt::Display for Url<'a, 'queries> {
 
 
 
-
-
 #[inline]
 fn parse_path(slice: &[u8]) -> Result<(&str, usize), UrlError> {
   if slice.is_empty() || slice[0] != b'/' {return Err(UrlError::Path);}
@@ -152,7 +149,8 @@ fn parse_query_params<'a>(slice: &'a [u8], queries_buf: &mut [QueryParam<'a>]) -
     offset += name.1;
     let val = parse_query_param_value(&slice[offset..])?;
     offset += val.1;
-    queries_buf[iteration] = QueryParam::new(name.0, val.0);;
+    queries_buf[iteration] = QueryParam::new(name.0, val.0);
+    iteration += 1;
   };
   Ok(())
 }

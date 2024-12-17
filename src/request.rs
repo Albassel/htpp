@@ -11,21 +11,21 @@ use crate::{Error, HttpVer, Result, SPACE, URL_SAFE, Header, parse_headers};
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// A parsed HTTP request
-pub struct Request<'a> {
+pub struct Request<'a, 'headers> {
     /// The HTTP request method. Either `Method::Get`, `Method::Post`, or `Method::Put`
     pub method: Method,
     /// The target URL for the request
     pub path: &'a str,
     /// The HTTP request headers
-    pub headers: Vec<crate::Header<'a>>,
+    pub headers: &'headers [crate::Header<'a>],
     /// The body of the request or an empty slice if there is no body
     pub body: &'a [u8],
 }
-impl<'a> Request<'a> {
+impl<'a, 'headers> Request<'a, 'headers> {
   /// Construct a new Response from its parts
   /// Use an empty `&str` to create a `Respose` with no body
   #[inline]
-  pub fn new(method: Method, path: &'a str, headers: Vec<crate::Header<'a>>, body: &'a [u8]) -> Self {
+  pub fn new(method: Method, path: &'a str, headers: &'headers [crate::Header<'a>], body: &'a [u8]) -> Self {
     Self {
       method,
       path,
@@ -50,8 +50,9 @@ impl<'a> Request<'a> {
     bytes
   }
    /// Parses the bytes of an HTTP request into a `Request`
+   /// It parses headers into the `header_buf` you pass, if there is more headers than the length of the buffer you pass, an Err(Error::TooManyHeaders) is returned
   #[inline]
-  pub fn parse(slice: &'a [u8]) -> Result<Request<'a>> {
+  pub fn parse(slice: &'a [u8], headers_buf: &'headers mut [crate::Header<'a>]) -> Result<Request<'a, 'headers>> {
     if slice.len() < 14 {return Err(Error::Malformed);}
     let mut offset = 0;
     let (method, read) = parse_method(slice)?;
@@ -61,12 +62,12 @@ impl<'a> Request<'a> {
     if slice[offset..].len() < 10 {return Err(Error::Malformed);}
     parse_http_version(&slice[offset..])?;
     offset += 10;
-    let (headers, read) = parse_headers(&slice[offset..])?;
+    let read = parse_headers(&slice[offset..], headers_buf)?;
     offset += read;
-    Ok(Request::new(method, path, headers, &slice[offset..]))
+    Ok(Request::new(method, path, headers_buf, &slice[offset..]))
   }
 }
-impl<'a> fmt::Display for Request<'a> {
+impl<'a, 'headers> fmt::Display for Request<'a, 'headers> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
       let mut headers: String = self.headers.iter().map(|x| x.to_string() + "\r\n").collect();
       if headers.len() > 2 {

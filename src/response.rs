@@ -12,21 +12,21 @@ use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, HEADER
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// A parsed http response
-pub struct Response<'a> {
+pub struct Response<'a, 'headers> {
     /// The status code of the response
     pub status: u16,
     /// The reason phrase of the response or an empty string if it doesn't exist
     pub reason: &'a str,
     /// The HTTP response headers
-    pub headers: Vec<Header<'a>>,
+    pub headers: &'headers [Header<'a>],
     /// The body of the response or an empty slice if there is no body
     pub body: &'a [u8],
 }
-impl<'a> Response<'a> {
+impl<'a, 'headers> Response<'a, 'headers> {
   /// Construct a new `Response` from its parts.
   /// Use an empty `&str` to create a `Respose` with no reason phrase
   /// Use an empty `&str` to create a `Respose` with no body
-  pub fn new(status: u16, reason: &'a str, headers: Vec<crate::Header<'a>>, body: &'a [u8]) -> Response<'a> {
+  pub fn new(status: u16, reason: &'a str, headers: &'headers [Header<'a>], body: &'a [u8]) -> Response<'a, 'headers> {
     Self {
       status,
       reason,
@@ -54,19 +54,19 @@ impl<'a> Response<'a> {
     bytes
   }
   /// Parses the bytes of an HTTP response into a `Response`
+  /// It parses headers into the `header_buf` you pass, if there is more headers than the length of the buffer you pass, an Err(Error::TooManyHeaders) is returned
   #[inline]
-  pub fn parse(slice: &'a [u8]) -> Result<Response<'a>> {
+  pub fn parse(slice: &'a [u8], header_buf: &'headers mut [Header<'a>]) -> Result<Response<'a, 'headers>> {
     parse_http_version(slice)?;
     let mut offset: usize = 9;
     let (status, reason, read) = parse_status(&slice[offset..])?;
     offset += read;
-    let (headers, read) = parse_headers(&slice[offset..])?;
+    let read = parse_headers(&slice[offset..], header_buf)?;
     offset += read;
-    Ok(Response::new(status, reason, headers, &slice[offset..]))
+    Ok(Response::new(status, reason, header_buf, &slice[offset..]))
   }
 }
-impl<'a> fmt::Display for Response<'a> {
-    /// The string representation of the resonse
+impl<'a, 'headers> fmt::Display for Response<'a, 'headers> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
       let mut headers: String = self.headers.iter().map(|x| x.to_string() + "\r\n").collect();
       let body = match std::str::from_utf8(self.body) {
