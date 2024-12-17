@@ -145,7 +145,7 @@ fn parse_query_params<'a>(slice: &'a [u8], queries_buf: &mut [QueryParam<'a>]) -
   let mut offset = 0;
   let mut iteration = 0;
   while offset < slice.len() {
-    if iteration > queries_buf.len() {return Err(UrlError::TooManyQueryParams);}
+    if iteration >= queries_buf.len() {return Err(UrlError::TooManyQueryParams);}
     let name = parse_query_param_name(&slice[offset..])?;
     offset += name.1;
     let val = parse_query_param_value(&slice[offset..])?;

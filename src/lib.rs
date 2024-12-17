@@ -240,7 +240,7 @@ fn parse_headers<'a>(slice: &'a[u8], headers_buf: &mut [crate::Header<'a>]) -> R
   let mut offset = 0;
   let mut iteration = 0;
   while &slice[offset..(offset+2)] != b"\r\n" {
-    if iteration > headers_buf.len() {return Err(Error::TooManyHeaders);}
+    if iteration >= headers_buf.len() {return Err(Error::TooManyHeaders);}
     let name = parse_header_name(&slice[offset..])?;
     offset += name.1;
     let val = parse_header_value(&slice[offset..])?;
