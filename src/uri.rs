@@ -107,12 +107,13 @@ impl<'a, 'queries> fmt::Display for Url<'a, 'queries> {
         Some(queries) => {
           let mut params = String::new();
           for query in queries.iter() {
+            if query.name.is_empty() {continue;} 
             params.push_str(query.name);
             params.push('=');
             params.push_str(query.val);
             params.push('&');
           }
-          params.pop();
+          if !params.is_empty() {params.pop();};
           f.write_str(format!("{}?{}", self.path, params).as_str())
         },
         None => f.write_str(self.path),

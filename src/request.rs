@@ -40,6 +40,7 @@ impl<'a, 'headers> Request<'a, 'headers> {
     let mut bytes = Vec::new();
     bytes.extend(format!("{} {} HTTP/1.1\r\n", self.method, self.path).as_bytes());
     for header in self.headers.iter() {
+      if header.name.is_empty() {break;}
       bytes.extend(header.name.as_bytes());
       bytes.extend(b": ");
       bytes.extend(header.val);
@@ -69,10 +70,10 @@ impl<'a, 'headers> Request<'a, 'headers> {
 }
 impl<'a, 'headers> fmt::Display for Request<'a, 'headers> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      let mut headers: String = self.headers.iter().map(|x| x.to_string() + "\r\n").collect();
-      if headers.len() > 2 {
-        headers.pop();
-        headers.pop();
+      let mut headers = String::new();
+      for header in self.headers.iter() {
+        if header.to_string().is_empty() {continue;} 
+        headers.push_str(&format!("{}\r\n", header));
       }
       let body = match std::str::from_utf8(self.body) {
         Ok(v) => {
@@ -82,7 +83,7 @@ impl<'a, 'headers> fmt::Display for Request<'a, 'headers> {
           format!("{:?}", self.body)
         },
       };
-      f.write_str(format!("{} {} HTTP/1.1\r\n{}\r\n\r\n{}", self.method, self.path, headers, body).as_str())
+      f.write_str(format!("{} {} HTTP/1.1\r\n{}\r\n{}", self.method, self.path, headers, body).as_str())
     }
 }
 

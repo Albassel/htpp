@@ -44,6 +44,7 @@ impl<'a, 'headers> Response<'a, 'headers> {
       bytes.extend(format!("HTTP/1.1 {} {}\r\n", self.status, self.reason).as_bytes());
     }
     for header in self.headers.iter() {
+      if header.name.is_empty() {break;}
       bytes.extend(header.name.as_bytes());
       bytes.extend(b": ");
       bytes.extend(header.val);
@@ -68,7 +69,11 @@ impl<'a, 'headers> Response<'a, 'headers> {
 }
 impl<'a, 'headers> fmt::Display for Response<'a, 'headers> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      let mut headers: String = self.headers.iter().map(|x| x.to_string() + "\r\n").collect();
+      let mut headers = String::new();
+      for header in self.headers.iter() {
+        if header.to_string().is_empty() {continue;} 
+        headers.push_str(&format!("{}\r\n", header));
+      }
       let body = match std::str::from_utf8(self.body) {
         Ok(v) => {
           v.to_string()
@@ -80,7 +85,7 @@ impl<'a, 'headers> fmt::Display for Response<'a, 'headers> {
       if self.reason.is_empty() {
         f.write_str(format!("HTTP/1.1 {}\r\n{}\r\n{}", self.status, headers, body).as_str())
       } else {
-        f.write_str(format!("HTTP/1.1 {} {}\r\n{}r\n{}", self.status, self.reason, headers, body).as_str())
+        f.write_str(format!("HTTP/1.1 {} {}\r\n{}\r\n{}", self.status, self.reason, headers, body).as_str())
       }
     }
 }

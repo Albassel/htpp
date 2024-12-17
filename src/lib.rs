@@ -208,15 +208,18 @@ pub struct Header<'a> {
 }
 impl<'a> fmt::Display for Header<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let header = match str::from_utf8(self.val) {
-            Ok(v) => {
-                format!("{}: {v}", self.name)
-            },
-            Err(_) => {
-                format!("{}: {:?}", self.name, self.val)
-            },
+        if !self.name.is_empty() {
+            let header = match str::from_utf8(self.val) {
+                Ok(v) => {
+                    format!("{}: {v}", self.name)
+                },
+                Err(_) => {
+                    format!("{}: {:?}", self.name, self.val)
+                },
+            };
+            return f.write_str(header.as_str());
         };
-        f.write_str(header.as_str())
+        f.write_str("")
     }
 }
 impl<'a> Header<'a> {
