@@ -203,8 +203,10 @@ pub const EMPTY_HEADER: Header = Header{name: "", val: &[]};
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 /// An HTTP header
 pub struct Header<'a> {
-    name: &'a str,
-    val: &'a [u8],
+    /// The name of the header
+    pub name: &'a str,
+    /// The value of the header
+    pub val: &'a [u8],
 }
 impl<'a> fmt::Display for Header<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
