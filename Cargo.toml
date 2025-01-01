@@ -1,6 +1,6 @@
 [package]
 name = "htpp"
-version = "0.3.4"
+version = "0.3.5"
 edition = "2021"
 authors=["Basel"]
 description="A simple, fast, and secure http parser. It strictly adheres to the http specification. It can also parse URLs including query parameters"

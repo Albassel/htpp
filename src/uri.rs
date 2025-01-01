@@ -170,7 +170,7 @@ fn parse_query_param_name(slice: &[u8]) -> Result<(&str, usize), UrlError> {
       return Ok( (unsafe { std::str::from_utf8_unchecked(query_name) }, counter+1));
     }
   }
-  unreachable!();
+  Err(UrlError::Query)
 }
 
 #[inline]
