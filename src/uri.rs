@@ -7,9 +7,14 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use std::{collections::HashMap, fmt, path::Path};
+use core::fmt;
 
 use crate::URL_SAFE;
+
+#[cfg(feature = "no_std")]
+use alloc::string::String;
+#[cfg(feature = "no_std")]
+use alloc::format;
 
 
 
@@ -132,11 +137,11 @@ fn parse_path(slice: &[u8]) -> Result<(&str, usize), UrlError> {
     if *character == b'?' {
       let path = &slice[..counter];
       //SAFETY: already checked characters are valid UTF-8
-      return Ok( (unsafe { std::str::from_utf8_unchecked(path) }, counter+1));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(path) }, counter+1));
     }
   }
   //SAFETY: already checked characters are valid UTF-8
-  Ok((unsafe { std::str::from_utf8_unchecked(slice) }, slice.len()))
+  Ok((unsafe { core::str::from_utf8_unchecked(slice) }, slice.len()))
 }
 
 
@@ -167,7 +172,7 @@ fn parse_query_param_name(slice: &[u8]) -> Result<(&str, usize), UrlError> {
       let query_name = &slice[..counter];
       if query_name.is_empty() {return Err(UrlError::Query);}
       //SAFETY: already checked characters are valid UTF-8
-      return Ok( (unsafe { std::str::from_utf8_unchecked(query_name) }, counter+1));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(query_name) }, counter+1));
     }
   }
   Err(UrlError::Query)
@@ -180,11 +185,11 @@ fn parse_query_param_value(slice: &[u8]) -> Result<(&str, usize), UrlError> {
       let val = &slice[..counter];
       if val.is_empty() {return Err(UrlError::Query);}
       //SAFETY: already checked characters are valid UTF-8
-      return Ok( (unsafe { std::str::from_utf8_unchecked(val) }, counter+1));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(val) }, counter+1));
     }
   }
   //SAFETY: already checked characters are valid UTF-8
-  Ok((unsafe { std::str::from_utf8_unchecked(slice) }, slice.len()))
+  Ok((unsafe { core::str::from_utf8_unchecked(slice) }, slice.len()))
 }
 
 

@@ -5,9 +5,18 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use std::{clone, fmt};
+use core::{clone, fmt};
 
 use crate::{Error, HttpVer, Result, SPACE, URL_SAFE, Header, parse_headers};
+
+#[cfg(feature = "no_std")]
+use alloc::string::String;
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+#[cfg(feature = "no_std")]
+use alloc::format;
+#[cfg(feature = "no_std")]
+use alloc::string::ToString;
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 /// A parsed HTTP request
@@ -75,7 +84,7 @@ impl<'a, 'headers> fmt::Display for Request<'a, 'headers> {
         if header.to_string().is_empty() {continue;} 
         headers.push_str(&format!("{}\r\n", header));
       }
-      let body = match std::str::from_utf8(self.body) {
+      let body = match core::str::from_utf8(self.body) {
         Ok(v) => {
           v.to_string()
         },
@@ -132,7 +141,7 @@ fn parse_path(slice: &[u8]) -> Result<(&str, usize)> {
       let path = &slice[..counter];
       if path.is_empty() {return Err(Error::Malformed);}
       //SAFETY: already checked that the input is valid ascii
-      return Ok( (unsafe { std::str::from_utf8_unchecked(path) }, counter+1));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(path) }, counter+1));
     }
     return Err(Error::Malformed);
   }

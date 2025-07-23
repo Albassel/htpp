@@ -75,8 +75,15 @@
 //! ```
 //! 
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[cfg(feature = "no_std")]
+extern crate alloc;
+
 use core::{str, fmt};
 
+#[cfg(feature = "no_std")]
+use alloc::format;
 
 #[cfg(test)]
 mod tests;
@@ -95,7 +102,7 @@ const LF: u8 = 10;
 const COLON: u8 = 58;
 const HTAB: u8 = 9;
 /// A result holding a parse error
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 macro_rules! byte_map {
     ($($flag:expr,)*) => ([
@@ -169,7 +176,7 @@ impl fmt::Display for Error {
         f.write_str("malformed request")
     }
 }
-impl std::error::Error for Error {}
+impl core::error::Error for Error {}
 
 
 #[derive(Debug, PartialEq, Eq)]
@@ -260,10 +267,10 @@ fn parse_header_name(slice: &[u8]) -> Result<(&str, usize)> {
       let name = &slice[..counter];
       if slice[counter+1] == SPACE || slice[counter+1] == 9 {
         //SAFETY: already checked that the input is valid ascii
-        return Ok( (unsafe { std::str::from_utf8_unchecked(name) }, counter+2));
+        return Ok( (unsafe { core::str::from_utf8_unchecked(name) }, counter+2));
       }
       //SAFETY: already checked that the input is valid ascii
-      return Ok( (unsafe { std::str::from_utf8_unchecked(name) }, counter+1));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(name) }, counter+1));
     }
     return Err(Error::Malformed);
   }

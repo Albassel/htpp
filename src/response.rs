@@ -6,8 +6,17 @@
     clippy::undocumented_unsafe_blocks
 )]
 
-use std::fmt;
+use core::fmt;
 use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, HEADER_NAME_SAFE};
+
+#[cfg(feature = "no_std")]
+use alloc::string::String;
+#[cfg(feature = "no_std")]
+use alloc::vec::Vec;
+#[cfg(feature = "no_std")]
+use alloc::format;
+#[cfg(feature = "no_std")]
+use alloc::string::ToString;
 
 
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
@@ -74,7 +83,7 @@ impl<'a, 'headers> fmt::Display for Response<'a, 'headers> {
         if header.to_string().is_empty() {continue;} 
         headers.push_str(&format!("{}\r\n", header));
       }
-      let body = match std::str::from_utf8(self.body) {
+      let body = match core::str::from_utf8(self.body) {
         Ok(v) => {
           v.to_string()
         },
@@ -117,14 +126,14 @@ fn parse_status(slice: &[u8]) -> Result<(u16, &str, usize)> {
       if (65..=90).contains(&slice[counter+1]) || (97..=122).contains(&slice[counter+1]) {
         let reason = parse_reason(&slice[(counter+1)..])?;
         //SAFETY: already checked that the input is valid ascii
-        return Ok((str::parse::<u16>(unsafe {std::str::from_utf8_unchecked(status)}).unwrap(), reason.0, counter + 1 + reason.1));
+        return Ok((str::parse::<u16>(unsafe {core::str::from_utf8_unchecked(status)}).unwrap(), reason.0, counter + 1 + reason.1));
         //there is no reason phrase
       } else if slice[counter+1] == CR {
         if slice[counter+2] != LF {
           return Err(Error::Malformed);
         }
         //SAFETY: already checked that the input is valid ascii
-        return Ok((str::parse::<u16>(unsafe {std::str::from_utf8_unchecked(status)}).unwrap(), "", counter + 3));
+        return Ok((str::parse::<u16>(unsafe {core::str::from_utf8_unchecked(status)}).unwrap(), "", counter + 3));
       } else {return Err(Error::Malformed);}
     } else if *character == CR {
       let status = &slice[..counter];
@@ -135,7 +144,7 @@ fn parse_status(slice: &[u8]) -> Result<(u16, &str, usize)> {
         return Err(Error::Malformed);
       }
       //SAFETY: already checked that the input is valid ascii
-      return Ok((str::parse::<u16>(unsafe {std::str::from_utf8_unchecked(status)}).unwrap(), "", counter + 2));
+      return Ok((str::parse::<u16>(unsafe {core::str::from_utf8_unchecked(status)}).unwrap(), "", counter + 2));
     } else {
       return Err(Error::Malformed);
     }
@@ -155,7 +164,7 @@ fn parse_reason(slice: &[u8]) -> Result<(&str, usize)> {
         return Err(Error::Malformed);
       }
       //SAFETY: already checked that the input is valid ascii
-      return Ok( (unsafe { std::str::from_utf8_unchecked(reason) }, counter+2));
+      return Ok( (unsafe { core::str::from_utf8_unchecked(reason) }, counter+2));
     } else {
       return Err(Error::Malformed);
     }
