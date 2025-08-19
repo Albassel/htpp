@@ -1,5 +1,4 @@
 
-
 #![allow(unused)]
 #![deny(
     missing_docs,
@@ -11,8 +10,6 @@ use core::fmt;
 
 use crate::URL_SAFE;
 
-#[cfg(feature = "no_std")]
-use alloc::string::String;
 #[cfg(feature = "no_std")]
 use alloc::format;
 
@@ -31,7 +28,7 @@ pub struct QueryParam<'a> {
 }
 impl<'a> fmt::Display for QueryParam<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(format!("{}={}", self.name, self.val).as_str())
+        write!(f, "{}={}", self.name, self.val)
     }
 }
 impl<'a> QueryParam<'a> {
@@ -108,28 +105,34 @@ impl<'a, 'queries> Url<'a, 'queries> {
 impl<'a, 'queries> fmt::Display for Url<'a, 'queries> {
     /// The string representation of the URL
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      match &self.query_params {
-        Some(queries) => {
-          let mut params = String::new();
-          for query in queries.iter() {
-            if query.name.is_empty() {continue;} 
-            params.push_str(query.name);
-            params.push('=');
-            params.push_str(query.val);
-            params.push('&');
-          }
-          if !params.is_empty() {params.pop();};
-          f.write_str(format!("{}?{}", self.path, params).as_str())
-        },
-        None => f.write_str(self.path),
-      }
+        match &self.query_params {
+            Some(queries) => {
+                // Write the base path
+                write!(f, "{}", self.path)?;
+
+                let mut first = true;
+                for query in queries.iter() {
+                    if query.name.is_empty() {
+                        continue;
+                    }
+                    if first {
+                        write!(f, "?{}={}", query.name, query.val)?;
+                        first = false;
+                    } else {
+                        write!(f, "&{}={}", query.name, query.val)?;
+                    }
+                }
+                Ok(())
+            }
+            None => write!(f, "{}", self.path),
+        }
     }
 }
 
 
 
 
-#[inline]
+#[inline(always)]
 fn parse_path(slice: &[u8]) -> Result<(&str, usize), UrlError> {
   if slice.is_empty() || slice[0] != b'/' {return Err(UrlError::Path);}
 
@@ -145,7 +148,7 @@ fn parse_path(slice: &[u8]) -> Result<(&str, usize), UrlError> {
 }
 
 
-#[inline]
+#[inline(always)]
 fn parse_query_params<'a>(slice: &'a [u8], queries_buf: &mut [QueryParam<'a>]) -> Result<(), UrlError> {
   let mut offset = 0;
   let mut iteration = 0;
@@ -162,7 +165,7 @@ fn parse_query_params<'a>(slice: &'a [u8], queries_buf: &mut [QueryParam<'a>]) -
 }
 
 
-#[inline]
+#[inline(always)]
 // parses the header name and removes the `:` character and any spaces after it
 fn parse_query_param_name(slice: &[u8]) -> Result<(&str, usize), UrlError> {
   for (counter, character) in slice.iter().enumerate() {
@@ -178,7 +181,7 @@ fn parse_query_param_name(slice: &[u8]) -> Result<(&str, usize), UrlError> {
   Err(UrlError::Query)
 }
 
-#[inline]
+#[inline(always)]
 fn parse_query_param_value(slice: &[u8]) -> Result<(&str, usize), UrlError> {
   for (counter, character) in slice.iter().enumerate() {
     if *character == b'&' {

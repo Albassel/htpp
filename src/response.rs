@@ -10,8 +10,6 @@ use core::fmt;
 use crate::{Error, HttpVer, Result, CR, LF, SPACE, Header, parse_headers, HEADER_NAME_SAFE};
 
 #[cfg(feature = "no_std")]
-use alloc::string::String;
-#[cfg(feature = "no_std")]
 use alloc::vec::Vec;
 #[cfg(feature = "no_std")]
 use alloc::format;
@@ -46,21 +44,25 @@ impl<'a, 'headers> Response<'a, 'headers> {
   /// The byte representation of the `Response` transmittible over wire
   #[inline]
   pub fn as_bytes(&self) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    if self.reason.is_empty() {
-      bytes.extend(format!("HTTP/1.1 {}\r\n", self.status).as_bytes());
-    } else {
-      bytes.extend(format!("HTTP/1.1 {} {}\r\n", self.status, self.reason).as_bytes());
+    let mut bytes = Vec::with_capacity(128 + self.body.len());
+
+    bytes.extend_from_slice(b"HTTP/1.1 ");
+    bytes.extend_from_slice(self.status.to_string().as_bytes());
+    if !self.reason.is_empty() {
+        bytes.push(SPACE);
+        bytes.extend_from_slice(self.reason.as_bytes());
     }
+    bytes.extend_from_slice(b"\r\n");
+
     for header in self.headers.iter() {
       if header.name.is_empty() {break;}
-      bytes.extend(header.name.as_bytes());
-      bytes.extend(b": ");
-      bytes.extend(header.val);
-      bytes.extend(b"\r\n");
+      bytes.extend_from_slice(header.name.as_bytes());
+      bytes.extend_from_slice(b": ");
+      bytes.extend_from_slice(header.val);
+      bytes.extend_from_slice(b"\r\n");
     }
-    bytes.extend(b"\r\n");
-    bytes.extend(self.body);
+    bytes.extend_from_slice(b"\r\n");
+    bytes.extend_from_slice(self.body);
     bytes
   }
   /// Parses the bytes of an HTTP response into a `Response`
@@ -78,29 +80,34 @@ impl<'a, 'headers> Response<'a, 'headers> {
 }
 impl<'a, 'headers> fmt::Display for Response<'a, 'headers> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-      let mut headers = String::new();
-      for header in self.headers.iter() {
-        if header.to_string().is_empty() {continue;} 
-        headers.push_str(&format!("{}\r\n", header));
-      }
-      let body = match core::str::from_utf8(self.body) {
-        Ok(v) => {
-          v.to_string()
-        },
-        Err(_) => {
-          format!("{:?}", self.body)
-        },
-      };
-      if self.reason.is_empty() {
-        f.write_str(format!("HTTP/1.1 {}\r\n{}\r\n{}", self.status, headers, body).as_str())
-      } else {
-        f.write_str(format!("HTTP/1.1 {} {}\r\n{}\r\n{}", self.status, self.reason, headers, body).as_str())
-      }
+        // Status line
+        if self.reason.is_empty() {
+            write!(f, "HTTP/1.1 {}\r\n", self.status)?;
+        } else {
+            write!(f, "HTTP/1.1 {} {}\r\n", self.status, self.reason)?;
+        }
+
+        // Headers
+        for header in self.headers.iter() {
+            if header.name.is_empty() {
+                continue;
+            }
+            writeln!(f, "{}", header)?;
+        }
+
+        // Empty line after headers
+        writeln!(f)?;
+
+        // Body
+        match core::str::from_utf8(self.body) {
+            Ok(v) => write!(f, "{}", v),
+            Err(_) => write!(f, "{:?}", self.body),
+        }
     }
 }
 
 
-#[inline]
+#[inline(always)]
 fn parse_http_version(slice: &[u8]) -> Result<HttpVer> {
   match slice.get(0..9) {
     Some(b"HTTP/1.1 ") => Ok(HttpVer::One),
@@ -109,7 +116,7 @@ fn parse_http_version(slice: &[u8]) -> Result<HttpVer> {
   }
 }
 
-#[inline]
+#[inline(always)]
 //parses the method and removes white space after it
 //Returns the status, reason phrase, and bytes read
 fn parse_status(slice: &[u8]) -> Result<(u16, &str, usize)> {
@@ -153,7 +160,7 @@ fn parse_status(slice: &[u8]) -> Result<(u16, &str, usize)> {
 }
 
 
-#[inline]
+#[inline(always)]
 fn parse_reason(slice: &[u8]) -> Result<(&str, usize)> {
   for (counter, character) in slice.iter().enumerate() {
     if HEADER_NAME_SAFE[*character as usize] {

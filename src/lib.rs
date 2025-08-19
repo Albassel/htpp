@@ -173,7 +173,10 @@ pub enum Error{
 }
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str("malformed request")
+        match self {
+            Error::Malformed => f.write_str("Malformed request"),
+            Error::TooManyHeaders => f.write_str("Too many headers"),
+        }
     }
 }
 impl core::error::Error for Error {}
@@ -218,17 +221,14 @@ pub struct Header<'a> {
 impl<'a> fmt::Display for Header<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if !self.name.is_empty() {
-            let header = match str::from_utf8(self.val) {
-                Ok(v) => {
-                    format!("{}: {v}", self.name)
-                },
-                Err(_) => {
-                    format!("{}: {:?}", self.name, self.val)
-                },
-            };
-            return f.write_str(header.as_str());
-        };
-        f.write_str("")
+            write!(f, "{}: ", self.name)?;
+            match str::from_utf8(self.val) {
+                Ok(v) => write!(f, "{}", v),
+                Err(_) => write!(f, "{:?}", self.val),
+            }
+        } else {
+            Ok(())
+        }
     }
 }
 impl<'a> Header<'a> {
@@ -257,7 +257,7 @@ fn parse_headers<'a>(slice: &'a[u8], headers_buf: &mut [crate::Header<'a>]) -> R
   }
   Ok(offset+2)
 }
-#[inline]
+#[inline(always)]
 // parses the header name and removes the `:` character and any spaces after it
 fn parse_header_name(slice: &[u8]) -> Result<(&str, usize)> {
   for (counter, character) in slice.iter().enumerate() {
@@ -276,7 +276,7 @@ fn parse_header_name(slice: &[u8]) -> Result<(&str, usize)> {
   }
   unreachable!();
 }
-#[inline]
+#[inline(always)]
 fn parse_header_value(slice: &[u8]) -> Result<(&[u8], usize)> {
   for (counter, character) in slice.iter().enumerate() {
     if *character == CR {
